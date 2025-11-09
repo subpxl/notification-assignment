@@ -1,0 +1,158 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This API manages message sending and control for the Insider assignment project.",
+        "title": "Insider Messaging API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/control/{action}": {
+            "post": {
+                "description": "Starts or stops the background sender process.",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "control"
+                ],
+                "summary": "Start or stop the sender service",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Action (start|stop)",
+                        "name": "action",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sender Service Started or Stopped",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid action",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "405": {
+                        "description": "method not allowed",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Returns whether the sender service is currently running.",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "health"
+                ],
+                "summary": "Check service health",
+                "responses": {
+                    "200": {
+                        "description": "Sender Service is running set to: true/false",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/sent-messages": {
+            "get": {
+                "description": "Retrieves a paginated list of messages that have already been sent.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Get all sent messages",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Maximum number of messages to return (default 50)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Message"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "failed to get sent messages",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.Message": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "message_id": {
+                    "type": "string"
+                },
+                "recipient": {
+                    "type": "string"
+                },
+                "sent_at": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/models.MessageStatus"
+                }
+            }
+        },
+        "models.MessageStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "sent",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "MessageStatusPending",
+                "MessageStatusSent",
+                "MessageStatusFailed"
+            ]
+        }
+    }
+}

@@ -1,0 +1,106 @@
+basePath: /api/v1
+definitions:
+  models.Message:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      message_id:
+        type: string
+      recipient:
+        type: string
+      sent_at:
+        type: string
+      status:
+        $ref: '#/definitions/models.MessageStatus'
+    type: object
+  models.MessageStatus:
+    enum:
+    - pending
+    - sent
+    - failed
+    type: string
+    x-enum-varnames:
+    - MessageStatusPending
+    - MessageStatusSent
+    - MessageStatusFailed
+host: localhost:8080
+info:
+  contact: {}
+  description: This API manages message sending and control for the Insider assignment
+    project.
+  title: Insider Messaging API
+  version: "1.0"
+paths:
+  /control/{action}:
+    post:
+      description: Starts or stops the background sender process.
+      parameters:
+      - description: Action (start|stop)
+        in: path
+        name: action
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Sender Service Started or Stopped
+          schema:
+            type: string
+        "400":
+          description: invalid action
+          schema:
+            type: string
+        "405":
+          description: method not allowed
+          schema:
+            type: string
+      summary: Start or stop the sender service
+      tags:
+      - control
+  /health:
+    get:
+      description: Returns whether the sender service is currently running.
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: 'Sender Service is running set to: true/false'
+          schema:
+            type: string
+      summary: Check service health
+      tags:
+      - health
+  /sent-messages:
+    get:
+      description: Retrieves a paginated list of messages that have already been sent.
+      parameters:
+      - description: Maximum number of messages to return (default 50)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset for pagination
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Message'
+            type: array
+        "500":
+          description: failed to get sent messages
+          schema:
+            type: string
+      summary: Get all sent messages
+      tags:
+      - messages
+swagger: "2.0"

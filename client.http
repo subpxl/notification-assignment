@@ -1,0 +1,28 @@
+### Check health status
+GET http://localhost:8080/api/v1/health HTTP/1.1
+Content-Type: application/json
+
+### Start message processing
+POST http://localhost:8080/api/v1/control/start HTTP/1.1
+Content-Type: application/json
+
+### Stop message processing
+POST http://localhost:8080/api/v1/control/stop HTTP/1.1
+Content-Type: application/json
+
+### Get all sent messages
+GET http://localhost:8080/api/v1/sent-messages HTTP/1.1
+Content-Type: application/json
+
+### Test webhook endpoint
+POST https://webhook.site/adec5f9e-5371-4eaa-8a27-8592caffafb2 HTTP/1.1
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "id": 1,
+      "content": "Test message"
+    }
+  ]
+}

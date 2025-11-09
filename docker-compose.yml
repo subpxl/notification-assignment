@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: insider_messaging
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init-sql/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  app:
+    build:
+      context: .
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: insider_messaging
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      WEBHOOK_URL: https://webhook.site/adec5f9e-5371-4eaa-8a27-8592caffafb2/26f19331-b5b4-4d76-8fb9-eb99eb32d0aa
+      AUTH_KEY: INS.me1x9uMcyYGlhKKQVPoc.bO3j9aZwRTOcA2Ywo
+      INTERVAL_SEC: 120
+      BATCH_SIZE: 2
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
