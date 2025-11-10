@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 )
@@ -25,12 +26,15 @@ func NewScheduler(interval time.Duration, task func(context.Context) error) *Sch
 
 func (s *Scheduler) Start() {
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	if s.running {
-		s.mu.Unlock()
+		log.Println("[scheduler] already running")
+
 		return
 	}
+	s.stop = make(chan struct{})
 	s.running = true
-	s.mu.Unlock()
+
 	s.wg.Add(1)
 	go s.run()
 
@@ -41,13 +45,16 @@ func (s *Scheduler) run() {
 	ticker := time.NewTicker(s.interval)
 	defer ticker.Stop()
 
-	s.task(context.Background())
+	log.Println("[scheduler] started")
+	ctx := context.Background()
+	s.task(ctx)
 
 	for {
 		select {
 		case <-ticker.C:
-			s.task(context.Background())
+			s.task(ctx)
 		case <-s.stop:
+			log.Println("[scheduler] stopped")
 			return
 		}
 	}
@@ -55,15 +62,20 @@ func (s *Scheduler) run() {
 
 func (s *Scheduler) Stop() {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	if !s.running {
+		s.mu.Unlock()
+		log.Println("[scheduler] stop called but not running")
 		return
 	}
+
 	s.running = false
 	close(s.stop)
-	s.wg.Wait()
-}
+	s.mu.Unlock()
 
+	s.wg.Wait()
+	log.Println("[scheduler] gracefully stopped")
+
+}
 func (s *Scheduler) IsRunning() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

@@ -6,7 +6,7 @@ A Go-based messaging service that automatically sends messages from a PostgreSQL
 ## Prerequisites
 
 - Docker and Docker Compose
-- Go 1.21+ (for local development)
+- Go 1.24+ (for local development)
 
 ## Quick Start
 
@@ -37,6 +37,9 @@ make build
 
 # Check Redis cached messages
 make redis-keys
+
+# Check psql messages
+make psql
 ```
 
 ## Configuration

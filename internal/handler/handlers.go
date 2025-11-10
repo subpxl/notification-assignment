@@ -25,9 +25,18 @@ func NewHandler(svc *service.SenderService) *Handler {
 // @Success 200 {string} string "Sender Service is running set to: true/false"
 // @Router /health [get]
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+
 	status := h.Service.IsRunning()
-	w.Write([]byte("Sender Service is running set to: " + strconv.FormatBool(status)))
+	resp := map[string]any{
+		"service status": "ok",
+		"sender running": status,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		http.Error(w, `{"error":"failed to encode response"}`, http.StatusInternalServerError)
+	}
 }
 
 // Control godoc
@@ -46,14 +55,14 @@ func (h *Handler) Control(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(r)
-	action := vars["action"]
+	action := mux.Vars(r)["action"]
 
 	switch action {
 	case "start":
 		h.Service.Start()
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("Sender Service Started"))
+
 	case "stop":
 		h.Service.Stop()
 		w.WriteHeader(http.StatusOK)
@@ -74,16 +83,29 @@ func (h *Handler) Control(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {string} string "failed to get sent messages"
 // @Router /sent-messages [get]
 func (h *Handler) GetSent(w http.ResponseWriter, r *http.Request) {
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
-	if limit == 0 {
-		limit = 50
+	w.Header().Set("Content-Type", "application/json")
+
+	limitStr := r.URL.Query().Get("limit")
+	offsetStr := r.URL.Query().Get("offset")
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		limit = 50 // sensible default
 	}
+
+	offset, err := strconv.Atoi(offsetStr)
+	if err != nil || offset < 0 {
+		offset = 0
+	}
+
 	msgs, err := h.Service.GetSent(r.Context(), limit, offset)
 	if err != nil {
-		http.Error(w, "failed to get sent messages", http.StatusInternalServerError)
+		http.Error(w, `{"error":"failed to get sent messages"}`, http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(msgs)
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(msgs); err != nil {
+		http.Error(w, `{"error":"failed to encode response"}`, http.StatusInternalServerError)
+	}
 }

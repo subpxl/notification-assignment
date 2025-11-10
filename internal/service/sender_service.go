@@ -9,12 +9,15 @@ import (
 	"insider-assignment/internal/models"
 	"insider-assignment/internal/repository"
 	"insider-assignment/internal/scheduler"
+	"sync"
 
 	"net/http"
 	"time"
 )
 
 type SenderService struct {
+	mu sync.Mutex
+
 	Repo      *repository.MessageRepoPsql
 	cache     *cache.Cache
 	Scheduler *scheduler.Scheduler
@@ -38,10 +41,20 @@ func NewSenderService(repo *repository.MessageRepoPsql, cache *cache.Cache, webh
 }
 
 func (s *SenderService) Start() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.Scheduler.IsRunning() {
+		return
+	}
 	s.Scheduler.Start()
 }
 
 func (s *SenderService) Stop() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if !s.Scheduler.IsRunning() {
+		return
+	}
 	s.Scheduler.Stop()
 }
 

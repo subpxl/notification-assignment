@@ -20,3 +20,5 @@ redis-keys:
 logs:
 	docker-compose logs -f app
 
+psql:
+	docker-compose exec postgres psql -U postgres -d insider_messaging
